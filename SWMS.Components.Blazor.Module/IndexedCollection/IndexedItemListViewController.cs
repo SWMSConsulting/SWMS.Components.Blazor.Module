@@ -1,9 +1,8 @@
 ﻿using DevExpress.ExpressApp;
 using DevExpress.ExpressApp.Blazor.Editors;
-using SalesDashboard.Module.BusinessObjects;
 using SWMS.Components.Blazor.Module.IndexedCollection;
 
-namespace SalesDashboard.Blazor.Server.Controllers
+namespace SWMS.Components.Blazor.Module
 {
     public class IndexedItemListViewController : ObjectViewController<ListView, IIndexedItem>
     {

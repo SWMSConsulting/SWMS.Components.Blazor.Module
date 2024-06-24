@@ -1,4 +1,4 @@
-﻿namespace SalesDashboard.Module.BusinessObjects
+﻿namespace SWMS.Components.Blazor.Module
 {
     public interface IIndexedItem
     {
