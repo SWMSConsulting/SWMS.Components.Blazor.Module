@@ -1,7 +1,6 @@
-﻿namespace SWMS.Components.Blazor.Module
+﻿namespace SWMS.Components.Blazor.Module.IndexedCollection;
+
+public interface IIndexedCollection
 {
-    public interface IIndexedCollection
-    {
-        public abstract IList<IIndexedItem> Items { get; }
-    }
+    public abstract IList<IIndexedItem> Items { get; }
 }

@@ -2,6 +2,10 @@
 @using DevExpress.ExpressApp
 @using Microsoft.AspNetCore.Components.Web
 
+<!-- 
+    <div>@Item.Index</div>
+-->
+
 <DxButton RenderStyle="ButtonRenderStyle.Secondary"
           IconCssClass="dx-icon-arrowup"
           Click="@OnDecreaseIndexClicked"
@@ -25,6 +29,10 @@
    public static RenderFragment<GridDataColumnCellDisplayTemplateContext> Create(IObjectSpace objectSpace) => (item) =>
     {
          var indexedItem = (IIndexedItem)item.DataItem;
+
+         if (indexedItem.Index == 0)
+             indexedItem.Index = indexedItem.Collection.Items.Count;
+
          return@<IndexEditorTemplate ObjectSpace="@objectSpace" Item="@indexedItem" />;
     };
 
