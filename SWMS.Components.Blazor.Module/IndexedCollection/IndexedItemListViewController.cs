@@ -1,8 +1,7 @@
 ﻿using DevExpress.ExpressApp;
 using DevExpress.ExpressApp.Blazor.Editors;
-using SWMS.Components.Blazor.Module.IndexedCollection;
 
-namespace SWMS.Components.Blazor.Module;
+namespace SWMS.Components.Blazor.Module.IndexedCollection;
 public class IndexedItemListViewController : ObjectViewController<ListView, IIndexedItem>
 {
     public IndexedItemListViewController()
