@@ -2,7 +2,9 @@
 @using DevExpress.ExpressApp
 @using Microsoft.AspNetCore.Components.Web
 
+<!-- 
     <div>@Item.Index</div>
+-->
 
 <DxButton RenderStyle="ButtonRenderStyle.Secondary"
           IconCssClass="dx-icon-arrowup"
@@ -24,8 +26,8 @@
     [Parameter]
     public IIndexedItem Item { get; set; }
 
-    public static RenderFragment<GridDataColumnCellDisplayTemplateContext> Create(IObjectSpace objectSpace) => (item) =>
-     {
+   public static RenderFragment<GridDataColumnCellDisplayTemplateContext> Create(IObjectSpace objectSpace) => (item) =>
+    {
          var indexedItem = (IIndexedItem)item.DataItem;
 
          if (indexedItem.Index == 0 && indexedItem.Collection != null)
