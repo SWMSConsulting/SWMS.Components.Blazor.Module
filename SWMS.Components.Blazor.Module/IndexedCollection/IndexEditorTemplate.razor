@@ -1,0 +1,84 @@
+﻿@using DevExpress.Blazor
+@using DevExpress.ExpressApp
+@using Microsoft.AspNetCore.Components.Web
+
+    <div>@Item.Index</div>
+
+<DxButton RenderStyle="ButtonRenderStyle.Secondary"
+          IconCssClass="dx-icon-arrowup"
+          Click="@OnDecreaseIndexClicked"
+          Enabled="@ButtonDecreaseEnabled" />
+
+
+<DxButton RenderStyle="ButtonRenderStyle.Secondary"
+          IconCssClass="dx-icon-arrowdown"
+          Click="@OnIncreaseIndexClicked"
+          Enabled="@ButtonIncreaseEnabled" />
+
+
+
+@code {
+    [Parameter]
+    public IObjectSpace ObjectSpace { get; set; }
+
+    [Parameter]
+    public IIndexedItem Item { get; set; }
+
+    public static RenderFragment<GridDataColumnCellDisplayTemplateContext> Create(IObjectSpace objectSpace) => (item) =>
+     {
+         var indexedItem = (IIndexedItem)item.DataItem;
+
+         if (indexedItem.Index == 0 && indexedItem.Collection != null)
+         {
+             indexedItem.Index = indexedItem.Collection.Items.Max(x => x.Index) + 1;
+             objectSpace.CommitChanges();
+         }
+
+         return@<IndexEditorTemplate ObjectSpace="@objectSpace" Item="@indexedItem" />;
+    };
+
+    private bool ButtonIncreaseEnabled {
+        get
+        {
+            var index = Item.Index;
+            var maxIndex = Item.Collection.Items.Max(x => x.Index);
+            return index < maxIndex;
+        }
+    }
+
+    private bool ButtonDecreaseEnabled
+    {
+        get
+        {
+            var index = Item.Index;
+            var collection = Item.Collection;
+            var items = collection.Items;
+            var minIndex = items.Min(x => x.Index);
+            return index > minIndex;
+        }
+    }
+
+    void OnDecreaseIndexClicked(MouseEventArgs args)
+    {
+        UpdateIndexes(-1);
+    }
+
+    void OnIncreaseIndexClicked(MouseEventArgs args)
+    {
+        UpdateIndexes(1);        
+    }
+
+    void UpdateIndexes(int step)
+    {
+        var oldIndex = Item.Index;
+        var newIndex = oldIndex + step;
+        
+        var other = Item.Collection.Items.FirstOrDefault(x => x.Index == newIndex);
+        if (other != null)
+            other.Index = oldIndex;
+
+        Item.Index = newIndex;
+
+        ObjectSpace.CommitChanges();
+    }
+}
