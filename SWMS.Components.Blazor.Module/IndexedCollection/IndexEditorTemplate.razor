@@ -2,20 +2,22 @@
 @using DevExpress.ExpressApp
 @using Microsoft.AspNetCore.Components.Web
 
-<!-- 
+@if (Item.IsEditable)
+{
+    <DxButton RenderStyle="ButtonRenderStyle.Secondary"
+              IconCssClass="dx-icon-arrowup"
+              Click="@OnDecreaseIndexClicked"
+              Enabled="@ButtonDecreaseEnabled" />
+
+
+    <DxButton RenderStyle="ButtonRenderStyle.Secondary"
+              IconCssClass="dx-icon-arrowdown"
+              Click="@OnIncreaseIndexClicked"
+    Enabled="@ButtonIncreaseEnabled" />
+} else
+{
     <div>@Item.Index</div>
--->
-
-<DxButton RenderStyle="ButtonRenderStyle.Secondary"
-          IconCssClass="dx-icon-arrowup"
-          Click="@OnDecreaseIndexClicked"
-          Enabled="@ButtonDecreaseEnabled" />
-
-
-<DxButton RenderStyle="ButtonRenderStyle.Secondary"
-          IconCssClass="dx-icon-arrowdown"
-          Click="@OnIncreaseIndexClicked"
-          Enabled="@ButtonIncreaseEnabled" />
+}
 
 
 
@@ -27,7 +29,7 @@
     public IIndexedItem Item { get; set; }
 
    public static RenderFragment<GridDataColumnCellDisplayTemplateContext> Create(IObjectSpace objectSpace) => (item) =>
-    {
+     {
          var indexedItem = (IIndexedItem)item.DataItem;
 
          if (indexedItem.Index == 0 && indexedItem.Collection != null)
@@ -35,7 +37,7 @@
              indexedItem.Index = indexedItem.Collection.Items.Max(x => x.Index) + 1;
              objectSpace.CommitChanges();
          }
-
+         
          return@<IndexEditorTemplate ObjectSpace="@objectSpace" Item="@indexedItem" />;
     };
 

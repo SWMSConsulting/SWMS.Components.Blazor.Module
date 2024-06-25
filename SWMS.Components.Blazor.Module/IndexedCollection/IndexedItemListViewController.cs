@@ -1,4 +1,5 @@
-﻿using DevExpress.ExpressApp;
+﻿using DevExpress.DataAccess.Native.EntityFramework;
+using DevExpress.ExpressApp;
 using DevExpress.ExpressApp.Blazor.Editors;
 
 namespace SWMS.Components.Blazor.Module.IndexedCollection;
