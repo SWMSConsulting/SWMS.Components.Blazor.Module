@@ -28,17 +28,24 @@
     [Parameter]
     public IIndexedItem Item { get; set; }
 
-   public static RenderFragment<GridDataColumnCellDisplayTemplateContext> Create(IObjectSpace objectSpace) => (item) =>
-     {
-         var indexedItem = (IIndexedItem)item.DataItem;
+    public static RenderFragment<GridDataColumnCellDisplayTemplateContext> Create(IObjectSpace objectSpace) => (item) =>
+    {
+        var indexedItem = (IIndexedItem)item.DataItem;
 
-         if (indexedItem.Index == 0 && indexedItem.Collection != null)
-         {
-             indexedItem.Index = indexedItem.Collection.Items.Max(x => x.Index) + 1;
-             objectSpace.CommitChanges();
-         }
+        if (indexedItem.Index == 0 && indexedItem.Collection != null)
+        {
+            indexedItem.Index = indexedItem.Collection.Items.Max(x => x.Index) + 1;
+            try
+            {
+                objectSpace.CommitChanges();
+                  
+            } catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
          
-         return@<IndexEditorTemplate ObjectSpace="@objectSpace" Item="@indexedItem" />;
+        return@<IndexEditorTemplate ObjectSpace="@objectSpace" Item="@indexedItem" />;
     };
 
     private bool ButtonIncreaseEnabled {
