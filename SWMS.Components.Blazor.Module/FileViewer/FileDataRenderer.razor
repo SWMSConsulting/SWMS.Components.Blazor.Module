@@ -1,0 +1,14 @@
+﻿@using Microsoft.AspNetCore.Components.Web
+
+@namespace SWMS.Components.Blazor.Module.FileViewer
+
+<iframe src=@ComponentModel.Value style="width: 100%;height: 930px;border: none;" frameborder="0" allowfullscreen></iframe>
+
+@code {
+
+    [Parameter]
+    public FileDataModel ComponentModel { get; set; }
+
+    public static RenderFragment Create(FileDataModel componentModel) =>
+    @<FileDataRenderer ComponentModel=@componentModel />;
+}
