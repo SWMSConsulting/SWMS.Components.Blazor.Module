@@ -5,7 +5,7 @@ using DevExpress.XtraRichEdit;
 
 namespace SWMS.Components.Blazor.Module.FileViewer.BusinessObjects;
 
-public class CustomDBSavedFileAttachment : ViewableFileAttachment
+public class DatabaseSavedFileAttachment : ViewableFileAttachment
 {
     [ExpandObjectMembers(ExpandObjectMembers.Never), ImmediatePostData]
     [FileTypeFilter("AllowedFilesFilter", 1, "*.pdf", "*.png")]

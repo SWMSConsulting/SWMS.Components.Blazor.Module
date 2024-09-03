@@ -12,5 +12,5 @@ public class FileAttachmentType : BaseObject
     public virtual string Name { get; set; }
 
     [VisibleInDetailView(false), VisibleInListView(false), VisibleInLookupListView(false)]
-    public virtual IList<CustomDBSavedFileAttachment> FileAttachments { get; set; } = new ObservableCollection<CustomDBSavedFileAttachment>();
+    public virtual IList<DatabaseSavedFileAttachment> FileAttachments { get; set; } = new ObservableCollection<DatabaseSavedFileAttachment>();
 }
