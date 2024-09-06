@@ -1,19 +1,26 @@
-﻿namespace SWMS.Components.Blazor.Module.FileViewer.BusinessObjects;
+﻿using DevExpress.Persistent.Validation;
+using System.ComponentModel;
+
+namespace SWMS.Components.Blazor.Module.FileViewer.BusinessObjects;
 
 public class LocallySavedFileAttachment : ViewableFileAttachment
 {
     public virtual string FilePath { get; set; }
 
+    [Browsable(false)]
+    [RuleFromBoolProperty("FileExists", DefaultContexts.Save, "File does not exist", UsedProperties = "FilePath")]
+    public bool FileExists => File.Exists(FilePath);
+
 
     #region ViewableFileAttachment
-    public override string FileName => FilePath?.Split("/").Last() ?? "New File";
+    public override string FileName => Path.GetFileName(FilePath) ?? "New File";
 
     public override byte[] Bytes
     {
         get
         {
             if (string.IsNullOrEmpty(FilePath))
-                return null;
+                return [];
 
             try
             {
@@ -21,7 +28,8 @@ public class LocallySavedFileAttachment : ViewableFileAttachment
             }
             catch (Exception ex)
             {
-                return null;
+                Console.WriteLine(ex);
+                return [];
             }
         }
     }
