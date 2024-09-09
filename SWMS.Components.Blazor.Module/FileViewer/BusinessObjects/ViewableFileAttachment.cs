@@ -52,7 +52,6 @@ public abstract class ViewableFileAttachment : BaseObject
             ms.Flush();
 
             ms.Position = 0;
-            string mimetype = "application/pdf";
             if (string.IsNullOrEmpty(filename) == false)
             {
                 // if it is a docx et al need to convert it to a pdf before rendering it
@@ -68,9 +67,6 @@ public abstract class ViewableFileAttachment : BaseObject
                             reds.ExportToPdf(rtms);
                             rtms.Position = 0;
 
-                            // need to override this as it will render in a pdf
-                            mimetype = "application/pdf";
-                            //ret = string.Format("data:{0};base64,", mimetype);
                             base64 = Convert.ToBase64String(rtms.ToArray());
                             rtms.Dispose();
                         }
@@ -78,8 +74,6 @@ public abstract class ViewableFileAttachment : BaseObject
                 }
                 else
                 {
-                    mimetype = GetMimeType(filename);
-                    //ret = string.Format("data:{0};base64,", mimetype);
                     base64 = Convert.ToBase64String(ms.ToArray());
                 }
             }
