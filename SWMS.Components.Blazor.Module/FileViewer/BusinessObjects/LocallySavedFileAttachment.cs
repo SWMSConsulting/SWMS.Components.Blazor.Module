@@ -1,10 +1,12 @@
-﻿using DevExpress.Persistent.Validation;
+﻿using DevExpress.Persistent.Base;
+using DevExpress.Persistent.Validation;
 using System.ComponentModel;
 
 namespace SWMS.Components.Blazor.Module.FileViewer.BusinessObjects;
 
 public class LocallySavedFileAttachment : ViewableFileAttachment
 {
+    [EditorAlias(nameof(FilePathStringEditor))]
     public virtual string FilePath { get; set; }
 
     [Browsable(false)]
