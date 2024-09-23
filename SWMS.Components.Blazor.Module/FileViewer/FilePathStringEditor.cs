@@ -12,7 +12,7 @@ public class FilePathStringEditor : BlazorPropertyEditorBase
     public FilePathStringEditor(Type objectType, IModelMemberViewItem model) : base(objectType, model) { }
     protected override IComponentModel CreateComponentModel()
     {
-        var basePath = Environment.GetEnvironmentVariable("FILES_BASE_PATH") ?? "";
+        var basePath = Environment.GetEnvironmentVariable("FILES_BASE_PATH") ?? ".";
 
         List<string> files = Directory.GetFiles(basePath, "*", SearchOption.AllDirectories).ToList();
 
