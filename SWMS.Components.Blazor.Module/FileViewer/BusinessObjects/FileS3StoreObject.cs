@@ -6,15 +6,11 @@ using DevExpress.Persistent.Validation;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel;
 using DevExpress.ExpressApp.Utils;
+using SWMS.Components.Blazor.Module.FileViewer.Services;
 
 
 namespace SWMS.Components.Blazor.Module.FileViewer.BusinessObjects;
 
-
-/// <summary>
-/// source: https://github.com/DevExpress-Examples/XAF_how-to-store-file-attachments-in-the-file-system-instead-of-the-database/tree/23.1.6%2B
-/// This class enables you to store uploaded files in a centralized file system location instead of the database. You can configure the file system store location via the static FileSystemDataModule.FileSystemStoreLocation property.
-/// </summary>
 [DefaultProperty(nameof(FileName))]
 [NavigationItem("test")]
 public class FileS3StoreObject : BaseObject, IFileData, IEmptyCheckable
@@ -36,64 +32,45 @@ public class FileS3StoreObject : BaseObject, IFileData, IEmptyCheckable
     }
     protected virtual void SaveFileToStore()
     {
-        if (!string.IsNullOrEmpty(RealFileName) && TempSourceStream != null)
+        if (string.IsNullOrEmpty(RealFileName) || TempSourceStream == null)
         {
-            try
-            {
-                // Reset the position of the stream to the beginning
-                if (TempSourceStream.CanSeek)
-                {
-                    TempSourceStream.Position = 0;
-                }
-                else
-                {
-                    throw new UserFriendlyException("Stream is not seekable.");
-                }
-                // Use the S3 service to upload the file
-                using (var uploadStream = new MemoryStream())
-                {
-                    TempSourceStream.CopyTo(uploadStream);
-                    uploadStream.Position = 0;
-                    S3StorageService.UploadFileToS3(uploadStream, RealFileName);
-                }
-
-                // Optionally, you can set the file size after upload
-                Size = (int)TempSourceStream.Length;
-            }
-            catch (Exception exc)
-            {
-                throw new UserFriendlyException($"Error saving file to S3: {exc.Message}", exc);
-            }
-        }
-        else
-        {
-            throw new UserFriendlyException("File name or stream is invalid.");
-        }
-    }
-
-    private void RemoveOldFileFromStore()
-    {
-        //Dennis: We need to remove the old file from the store when saving the current object.
-        if (string.IsNullOrEmpty(RealFileName))
-        {//B222892
-            return;
+            throw new UserFriendlyException("File name and stream are not valid.");
         }
 
         try
         {
-            S3StorageService.DeleteFileFromS3(RealFileName);
+            // Reset the position of the stream to the beginning
+            if (TempSourceStream.CanSeek)
+            {
+                TempSourceStream.Position = 0;
+            }
+            else
+            {
+                throw new UserFriendlyException("Stream is not seekable.");
+            }
+            // Use the S3 service to upload the file
+            using (var uploadStream = new MemoryStream())
+            {
+                TempSourceStream.CopyTo(uploadStream);
+                uploadStream.Position = 0;
+                S3StorageService.UploadFileToS3(uploadStream, RealFileName);
+            }
+
+            // Optionally, you can set the file size after upload
+            Size = (int)TempSourceStream.Length;
         }
-        catch (DirectoryNotFoundException exc)
+        catch (Exception exc)
         {
-            throw new UserFriendlyException(exc);
+            throw new UserFriendlyException($"Error saving file to S3: {exc.Message}", exc);
         }
+        
     }
     public override void OnSaving()
     {
         base.OnSaving();
         if (!ObjectSpace.IsObjectToDelete(this))
         {
-            Guard.ArgumentNotNullOrEmpty(S3StorageService.FileSystemStoreLocation, "FileSystemStoreLocation");
+            //Guard.ArgumentNotNullOrEmpty(S3StorageService.FileSystemStoreLocation, "FileSystemStoreLocation");
             SaveFileToStore();
         }
         else
@@ -104,10 +81,21 @@ public class FileS3StoreObject : BaseObject, IFileData, IEmptyCheckable
     #region IFileData Members
     public void Clear()
     {
-        //Dennis: When clearing the file name property we need to save the name of the old file to remove it from the store in the future. You can also setup a separate service for that.
-       
-        RemoveOldFileFromStore();
-        Size = 0;
+        if (string.IsNullOrEmpty(RealFileName))
+        {
+            return;
+        }
+
+        try
+        {
+            S3StorageService.DeleteFileFromS3(RealFileName);
+            FileName = string.Empty;
+            Size = 0;
+        }
+        catch (DirectoryNotFoundException exc)
+        {
+            throw new UserFriendlyException(exc);
+        }
     }
     [FieldSize(260)]
     public virtual string FileName { get; set; }
@@ -132,7 +120,7 @@ public class FileS3StoreObject : BaseObject, IFileData, IEmptyCheckable
             using (var temp = new MemoryStream())
             {
                 // Copy the source stream into the temporary memory stream
-                S3StorageService.CopyStream(value, temp);
+                FileHelperService.CopyStream(value, temp);
                 tempSourceStream = new MemoryStream(temp.ToArray());
                 tempSourceStream.Position = 0;
             }
@@ -163,12 +151,12 @@ public class FileS3StoreObject : BaseObject, IFileData, IEmptyCheckable
             if (!string.IsNullOrEmpty(RealFileName))
             {
                 if (destination == null)
-                    S3StorageService.OpenFileWithDefaultProgram(RealFileName);
+                    FileHelperService.OpenFileWithDefaultProgram(RealFileName);
                 else
-                    S3StorageService.CopyFileToStream(RealFileName, destination);
+                    FileHelperService.CopyFileToStream(RealFileName, destination);
             }
             else if (TempSourceStream != null)
-                S3StorageService.CopyStream(TempSourceStream, destination);
+                FileHelperService.CopyStream(TempSourceStream, destination);
         }
         catch (DirectoryNotFoundException exc)
         {
@@ -182,6 +170,7 @@ public class FileS3StoreObject : BaseObject, IFileData, IEmptyCheckable
 
     public virtual int Size { get; set; }
     #endregion
+
     #region IEmptyCheckable Members
     public bool IsEmpty
     {

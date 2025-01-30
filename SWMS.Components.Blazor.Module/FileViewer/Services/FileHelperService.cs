@@ -1,21 +1,14 @@
-﻿namespace SWMS.Components.Blazor.Module.FileViewer;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-public class FileSystemStorageService
+namespace SWMS.Components.Blazor.Module.FileViewer.Services;
+
+public static class FileHelperService
 {
     public static int ReadBytesSize = 0x1000;
-    public static string FileSystemStoreLocation
-    {
-        get
-        {
-            var path = Environment.GetEnvironmentVariable("FILE_DATA_PATH");
-            if (string.IsNullOrEmpty(path))
-            {
-                path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "FileData");
-            }
-            Console.WriteLine($"FileSystemStoreLocation: {path}");
-            return path;
-        }
-    }
 
     public static void CopyFileToStream(string sourceFileName, Stream destination)
     {

@@ -6,6 +6,7 @@ using DevExpress.Persistent.Validation;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel;
 using DevExpress.ExpressApp.Utils;
+using SWMS.Components.Blazor.Module.FileViewer.Services;
 
 namespace SWMS.Components.Blazor.Module.FileViewer.BusinessObjects;
 
@@ -41,7 +42,7 @@ public class FileSystemStoreObject : BaseObject, IFileData, IEmptyCheckable
             {
                 using (Stream destination = File.Create(RealFileName))
                 { //T582918
-                    FileSystemStorageService.CopyStream(TempSourceStream, destination);
+                    FileHelperService.CopyStream(TempSourceStream, destination);
                     Size = (int)destination.Length;
                 }
             }
@@ -114,7 +115,7 @@ public class FileSystemStoreObject : BaseObject, IFileData, IEmptyCheckable
             {
                 if (value.Length > (long)int.MaxValue) throw new UserFriendlyException("File is too long");
                 tempSourceStream = new MemoryStream((int)value.Length);
-                FileSystemStorageService.CopyStream(value, tempSourceStream);
+                FileHelperService.CopyStream(value, tempSourceStream);
                 tempSourceStream.Position = 0;
             }
         }
@@ -143,12 +144,12 @@ public class FileSystemStoreObject : BaseObject, IFileData, IEmptyCheckable
             if (!string.IsNullOrEmpty(RealFileName))
             {
                 if (destination == null)
-                    FileSystemStorageService.OpenFileWithDefaultProgram(RealFileName);
+                    FileHelperService.OpenFileWithDefaultProgram(RealFileName);
                 else
-                    FileSystemStorageService.CopyFileToStream(RealFileName, destination);
+                    FileHelperService.CopyFileToStream(RealFileName, destination);
             }
             else if (TempSourceStream != null)
-                FileSystemStorageService.CopyStream(TempSourceStream, destination);
+                FileHelperService.CopyStream(TempSourceStream, destination);
         }
         catch (DirectoryNotFoundException exc)
         {
