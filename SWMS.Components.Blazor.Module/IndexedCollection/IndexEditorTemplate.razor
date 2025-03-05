@@ -2,7 +2,7 @@
 @using DevExpress.ExpressApp
 @using Microsoft.AspNetCore.Components.Web
 
-@if (Item.IsEditable)
+@if (Item != null && Item.IsEditable)
 {
     <DxButton RenderStyle="ButtonRenderStyle.Secondary"
               IconCssClass="dx-icon-arrowup"
@@ -16,7 +16,7 @@
     Enabled="@ButtonIncreaseEnabled" />
 } else
 {
-    <div>@Item.Index</div>
+    <div>@Item?.Index</div>
 }
 
 
@@ -51,6 +51,11 @@
     private bool ButtonIncreaseEnabled {
         get
         {
+            if (Item == null)
+            {
+                return false;
+            }
+
             var index = Item.Index;
             var maxIndex = Item.Collection.Items.Max(x => x.Index);
             return index < maxIndex;
@@ -61,6 +66,11 @@
     {
         get
         {
+            if (Item == null)
+            {
+                return false;
+            }
+
             var index = Item.Index;
             var collection = Item.Collection;
             var items = collection.Items;
@@ -81,6 +91,11 @@
 
     void UpdateIndexes(int step)
     {
+        if (Item == null)
+        {
+            return;
+        }
+
         var oldIndex = Item.Index;
         var newIndex = oldIndex + step;
         
