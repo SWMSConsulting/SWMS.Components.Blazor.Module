@@ -2,23 +2,24 @@
 @using DevExpress.ExpressApp
 @using Microsoft.AspNetCore.Components.Web
 
-@if (Item.IsEditable)
-{
-    <DxButton RenderStyle="ButtonRenderStyle.Secondary"
-              IconCssClass="dx-icon-arrowup"
-              Click="@OnDecreaseIndexClicked"
-              Enabled="@ButtonDecreaseEnabled" />
+@if (Item != null && Item.Collection != null){
+    @if (Item.IsEditable)
+    {
+        <DxButton RenderStyle="ButtonRenderStyle.Secondary"
+                  IconCssClass="dx-icon-arrowup"
+                  Click="@OnDecreaseIndexClicked"
+                  Enabled="@GetButtonDecreaseEnabled(Item)" />
 
 
-    <DxButton RenderStyle="ButtonRenderStyle.Secondary"
-              IconCssClass="dx-icon-arrowdown"
-              Click="@OnIncreaseIndexClicked"
-    Enabled="@ButtonIncreaseEnabled" />
-} else
-{
-    <div>@Item.Index</div>
+        <DxButton RenderStyle="ButtonRenderStyle.Secondary"
+                  IconCssClass="dx-icon-arrowdown"
+                  Click="@OnIncreaseIndexClicked"
+        Enabled="@GetButtonIncreaseEnabled(Item)" />
+    } else
+    {
+        <div>@Item.Index</div>
+    }
 }
-
 
 
 @code {
@@ -26,22 +27,17 @@
     public IObjectSpace ObjectSpace { get; set; }
 
     [Parameter]
-    public IIndexedItem Item { get; set; }
+    public IIndexedItem? Item { get; set; }
 
     public static RenderFragment<GridDataColumnCellDisplayTemplateContext> Create(IObjectSpace objectSpace) => (item) =>
     {
         var indexedItem = item.DataItem as IIndexedItem;
 
-        if (indexedItem == null)
+        if (indexedItem != null && indexedItem.Collection != null && indexedItem.Index == 0)
         {
-            return @<div/>;
-        }
-
-        if (indexedItem.Index == 0 && indexedItem.Collection != null)
-        {
-            indexedItem.Index = indexedItem.Collection.Items.Max(x => x.Index) + 1;
             try
             {
+                indexedItem.Index = indexedItem.Collection.Items.Max(x => x.Index) + 1;
                 objectSpace.CommitChanges();
                   
             } catch (Exception e)
@@ -53,26 +49,18 @@
         return@<IndexEditorTemplate ObjectSpace="@objectSpace" Item="@indexedItem" />;
     };
 
-    private bool ButtonIncreaseEnabled {
-        get
-        {
-            var index = Item.Index;
-            var maxIndex = Item.Collection.Items.Max(x => x.Index);
-            return index < maxIndex;
-        }
+    private bool GetButtonIncreaseEnabled(IIndexedItem item)   
+    {
+        var maxIndex = item.Collection.Items.Max(x => x.Index);
+        return item.Index < maxIndex;
     }
 
-    private bool ButtonDecreaseEnabled
+    private bool GetButtonDecreaseEnabled(IIndexedItem item)
     {
-        get
-        {
-            var index = Item.Index;
-            var collection = Item.Collection;
-            var items = collection.Items;
-            var minIndex = items.Min(x => x.Index);
-            return index > minIndex;
-        }
+        var minIndex = item.Collection.Items.Min(x => x.Index);
+        return item.Index > minIndex;
     }
+
 
     void OnDecreaseIndexClicked(MouseEventArgs args)
     {
@@ -86,7 +74,7 @@
 
     void UpdateIndexes(int step)
     {
-        if (Item == null)
+        if (Item == null || Item.Collection == null)
         {
             return;
         }
