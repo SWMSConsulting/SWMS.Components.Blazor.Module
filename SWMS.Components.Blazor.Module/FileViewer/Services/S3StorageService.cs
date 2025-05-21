@@ -103,4 +103,37 @@ public class S3StorageService
             throw;
         }
     }
+
+    public static MemoryStream LoadFileFromS3(string filename)
+    {
+        if (string.IsNullOrEmpty(filename))
+        {
+            throw new ArgumentException("File name cannot be null or empty.");
+        }
+        try
+        {
+            using var s3Client = GetClient();
+            var getRequest = new GetObjectRequest
+            {
+                BucketName = BucketName,
+                Key = filename
+            };
+            using var response = s3Client.GetObjectAsync(getRequest).Result;
+            using var responseStream = response.ResponseStream;
+            var memoryStream = new MemoryStream();
+            responseStream.CopyTo(memoryStream);
+            memoryStream.Position = 0; // Reset the position of the stream
+            return memoryStream;
+        }
+        catch (AmazonS3Exception ex)
+        {
+            Console.WriteLine($"AWS S3 error: {ex.Message}");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"General error: {ex.Message}");
+            throw;
+        }
+    }
 }

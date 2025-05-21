@@ -5,7 +5,6 @@ using DevExpress.Persistent.BaseImpl.EF;
 using DevExpress.Persistent.Validation;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel;
-using DevExpress.ExpressApp.Utils;
 using SWMS.Components.Blazor.Module.FileViewer.Services;
 
 
@@ -13,10 +12,9 @@ namespace SWMS.Components.Blazor.Module.FileViewer.BusinessObjects;
 
 [DefaultProperty(nameof(FileName))]
 [NavigationItem("test")]
-public class FileS3StoreObject : BaseObject, IFileData, IEmptyCheckable
+public class S3StoredFileData : BaseObject, IFileData, IEmptyCheckable
 {
     private Stream tempSourceStream;
-    private static object syncRoot = new object();
     public string RealFileName
     {
         get
@@ -63,7 +61,7 @@ public class FileS3StoreObject : BaseObject, IFileData, IEmptyCheckable
         {
             throw new UserFriendlyException($"Error saving file to S3: {exc.Message}", exc);
         }
-        
+
     }
     public override void OnSaving()
     {
@@ -78,6 +76,7 @@ public class FileS3StoreObject : BaseObject, IFileData, IEmptyCheckable
             Clear();
         }
     }
+
     #region IFileData Members
     public void Clear()
     {
@@ -113,21 +112,52 @@ public class FileS3StoreObject : BaseObject, IFileData, IEmptyCheckable
                 tempSourceStream = null;
             }
             else
-        {
-            if (value.Length > int.MaxValue)
-                throw new UserFriendlyException("File is too long");
-
-            using (var temp = new MemoryStream())
             {
-                // Copy the source stream into the temporary memory stream
-                FileHelperService.CopyStream(value, temp);
-                tempSourceStream = new MemoryStream(temp.ToArray());
-                tempSourceStream.Position = 0;
+                if (value.Length > int.MaxValue)
+                    throw new UserFriendlyException("File is too long");
+
+                using (var temp = new MemoryStream())
+                {
+                    // Copy the source stream into the temporary memory stream
+                    FileHelperService.CopyStream(value, temp);
+                    tempSourceStream = new MemoryStream(temp.ToArray());
+                    tempSourceStream.Position = 0;
+                }
             }
         }
-        }
     }
-    //Dennis: Fires when uploading a file.
+
+    public byte[] Content
+    {
+        get
+        {
+            if (TempSourceStream == null)
+            {
+                return [];
+            }
+
+            if (TempSourceStream.CanSeek)
+            {
+                TempSourceStream.Position = 0;
+            }
+            else
+            {
+                throw new UserFriendlyException("Stream is not seekable.");
+            }
+            byte[] buffer = new byte[TempSourceStream.Length];
+
+            int bytesRead = TempSourceStream.Read(buffer, 0, buffer.Length);
+            if (bytesRead < buffer.Length)
+            {
+                Array.Resize(ref buffer, bytesRead);
+            }
+
+            return buffer;
+        }
+
+    }
+        
+        //Dennis: Fires when uploading a file.
     void IFileData.LoadFromStream(string fileName, Stream source)
     {
         //Dennis: When assigning a new file we need to save the name of the old file to remove it from the store in the future.
@@ -144,27 +174,13 @@ public class FileS3StoreObject : BaseObject, IFileData, IEmptyCheckable
     {
         try
         {
-            if (!File.Exists(RealFileName))
-            {
-                return;
-            }
-            if (!string.IsNullOrEmpty(RealFileName))
-            {
-                if (destination == null)
-                    FileHelperService.OpenFileWithDefaultProgram(RealFileName);
-                else
-                    FileHelperService.CopyFileToStream(RealFileName, destination);
-            }
-            else if (TempSourceStream != null)
-                FileHelperService.CopyStream(TempSourceStream, destination);
+            var tempStream = S3StorageService.LoadFileFromS3(RealFileName);
+            FileHelperService.CopyStream(tempStream, destination);
+
         }
-        catch (DirectoryNotFoundException exc)
+        catch (Exception exc)
         {
-            throw new UserFriendlyException(exc);
-        }
-        catch (FileNotFoundException exc)
-        {
-            throw new UserFriendlyException(exc);
+            throw new UserFriendlyException($"Error loading file from S3: {exc.Message}", exc);
         }
     }
 
