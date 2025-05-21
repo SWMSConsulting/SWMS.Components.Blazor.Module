@@ -8,13 +8,13 @@
 
   <ItemGroup>
     <PackageReference Include="AWSSDK.S3" Version="3.7.411.6" />
-    <PackageReference Include="DevExpress.ExpressApp" Version="24.2.5" />
-    <PackageReference Include="DevExpress.ExpressApp.Blazor" Version="24.2.5" />
-    <PackageReference Include="DevExpress.Persistent.BaseImpl.EFCore" Version="24.2.5" />
+    <PackageReference Include="DevExpress.ExpressApp" Version="24.2.7" />
+    <PackageReference Include="DevExpress.ExpressApp.Blazor" Version="24.2.7" />
+    <PackageReference Include="DevExpress.Persistent.BaseImpl.EFCore" Version="24.2.7" />
     <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.0.10" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.10" />
-    <PackageReference Include="DevExpress.ExpressApp.Scheduler" Version="24.2.5" />
-    <PackageReference Include="DevExpress.ExpressApp.Scheduler.Blazor" Version="24.2.5" />
+    <PackageReference Include="DevExpress.ExpressApp.Scheduler" Version="24.2.7" />
+    <PackageReference Include="DevExpress.ExpressApp.Scheduler.Blazor" Version="24.2.7" />
     <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
   </ItemGroup>
