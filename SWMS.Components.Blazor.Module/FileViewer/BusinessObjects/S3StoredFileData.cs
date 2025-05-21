@@ -6,6 +6,7 @@ using DevExpress.Persistent.Validation;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel;
 using SWMS.Components.Blazor.Module.FileViewer.Services;
+using System.IO;
 
 
 namespace SWMS.Components.Blazor.Module.FileViewer.BusinessObjects;
@@ -14,6 +15,34 @@ namespace SWMS.Components.Blazor.Module.FileViewer.BusinessObjects;
 [NavigationItem("test")]
 public class S3StoredFileData : BaseObject, IFileData, IEmptyCheckable
 {
+    public virtual int Size { get; set; }
+
+    public virtual string FileName { get; set; }
+
+    private byte[]? content = null;
+
+    public byte[] Content
+    {
+        get
+        {
+            if (content == null)
+            {
+                // Load the file from S3 if not already loaded
+                try
+                {
+                    var tempStream = S3StorageService.LoadFileFromS3(RealFileName);
+                    content = new byte[tempStream.Length];
+                    tempStream.Read(content, 0, content.Length);
+                }
+                catch (Exception exc)
+                {
+                    throw new UserFriendlyException($"Error loading file from S3: {exc.Message}", exc);
+                }
+            }
+            return content;
+        }
+    }
+
     private Stream tempSourceStream;
     public string RealFileName
     {
@@ -96,8 +125,6 @@ public class S3StoredFileData : BaseObject, IFileData, IEmptyCheckable
             throw new UserFriendlyException(exc);
         }
     }
-    [FieldSize(260)]
-    public virtual string FileName { get; set; }
 
     [Browsable(false)]
     [NotMapped]
@@ -127,48 +154,21 @@ public class S3StoredFileData : BaseObject, IFileData, IEmptyCheckable
         }
     }
 
-    public byte[] Content
-    {
-        get
-        {
-            if (TempSourceStream == null)
-            {
-                return [];
-            }
-
-            if (TempSourceStream.CanSeek)
-            {
-                TempSourceStream.Position = 0;
-            }
-            else
-            {
-                throw new UserFriendlyException("Stream is not seekable.");
-            }
-            byte[] buffer = new byte[TempSourceStream.Length];
-
-            int bytesRead = TempSourceStream.Read(buffer, 0, buffer.Length);
-            if (bytesRead < buffer.Length)
-            {
-                Array.Resize(ref buffer, bytesRead);
-            }
-
-            return buffer;
-        }
-
-    }
         
-        //Dennis: Fires when uploading a file.
+    //Dennis: Fires when uploading a file.
     void IFileData.LoadFromStream(string fileName, Stream source)
     {
-        //Dennis: When assigning a new file we need to save the name of the old file to remove it from the store in the future.
-        if (fileName != FileName)
-        {// updated, old code was: if (string.IsNullOrEmpty(tempFileName))
-            //tempFileName = RealFileName;
-        }
-        FileName = fileName;
-        TempSourceStream = source;
-        Size = (int)TempSourceStream.Length;
+            //Dennis: When assigning a new file we need to save the name of the old file to remove it from the store in the future.
+            if (fileName != FileName)
+            {// updated, old code was: if (string.IsNullOrEmpty(tempFileName))
+             //tempFileName = RealFileName;
+            }
+            FileName = fileName;
+            TempSourceStream = source;
+            Size = (int)TempSourceStream.Length;
+            ObjectSpace.SetModified(this);
     }
+
     //Dennis: Fires when saving or opening a file.
     void IFileData.SaveToStream(Stream destination)
     {
@@ -183,15 +183,13 @@ public class S3StoredFileData : BaseObject, IFileData, IEmptyCheckable
             throw new UserFriendlyException($"Error loading file from S3: {exc.Message}", exc);
         }
     }
-
-    public virtual int Size { get; set; }
     #endregion
 
     #region IEmptyCheckable Members
     public bool IsEmpty
     {
         //T153149
-        get { return FileDataHelper.IsFileDataEmpty(this) || !(TempSourceStream != null || File.Exists(RealFileName)); }
+        get { return FileDataHelper.IsFileDataEmpty(this) || !(TempSourceStream != null || S3StorageService.FileExists(RealFileName)); }
     }
     #endregion
 }

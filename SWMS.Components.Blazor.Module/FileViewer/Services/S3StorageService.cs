@@ -15,10 +15,6 @@ public class S3StorageService
         var awsAccessKey = Environment.GetEnvironmentVariable("S3_ACCESS_KEY");
         var awsSecretKey = Environment.GetEnvironmentVariable("S3_SECRET_KEY");
         var serviceUrl = Environment.GetEnvironmentVariable("S3_SERVICE_URL");
-        Console.WriteLine($"Access Key: {awsAccessKey}");
-        Console.WriteLine($"Secret Key: {awsSecretKey}");
-        Console.WriteLine($"Service URL: {serviceUrl}");
-        Console.WriteLine($"Bucket Name: {BucketName}");
 
         if (string.IsNullOrEmpty(awsAccessKey) || string.IsNullOrEmpty(awsSecretKey) || string.IsNullOrEmpty(serviceUrl) || string.IsNullOrEmpty(BucketName))
         {
@@ -59,8 +55,6 @@ public class S3StorageService
             {
                 throw new Exception($"Error uploading file to S3: {response.HttpStatusCode}");
             }
-
-            Console.WriteLine($"File '{fileName}' uploaded successfully to bucket '{BucketName}'.");
         }
         catch (AmazonS3Exception ex)
         {
@@ -90,7 +84,6 @@ public class S3StorageService
                 Key = fileName
             };
             var response = s3Client.DeleteObjectAsync(deleteRequest).Result;
-            Console.WriteLine($"File '{fileName}' deleted successfully from bucket '{BucketName}'.");
         }
         catch (AmazonS3Exception ex)
         {
@@ -135,5 +128,34 @@ public class S3StorageService
             Console.WriteLine($"General error: {ex.Message}");
             throw;
         }
+    }
+
+    public static bool FileExists(string fileName)
+    {
+        if (string.IsNullOrEmpty(fileName))
+        {
+            return false;
+        }
+        try
+        {
+            using var s3Client = GetClient();
+            var request = new GetObjectMetadataRequest
+            {
+                BucketName = BucketName,
+                Key = fileName
+            };
+            s3Client.GetObjectMetadataAsync(request).Wait();
+            return true;
+        }
+        catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"General error: {ex.Message}");
+            throw;
+        }
+
     }
 }
