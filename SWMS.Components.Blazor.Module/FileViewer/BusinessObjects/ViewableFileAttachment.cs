@@ -6,6 +6,7 @@ using DevExpress.Persistent.Validation;
 using DevExpress.XtraRichEdit;
 using Microsoft.AspNetCore.StaticFiles;
 using System.ComponentModel;
+using System.Runtime.Serialization;
 
 namespace SWMS.Components.Blazor.Module.FileViewer.BusinessObjects;
 
@@ -19,6 +20,7 @@ public abstract class ViewableFileAttachment : BaseObject
     public abstract string FileName { get; }
 
     [Browsable(false)]
+    [IgnoreDataMember]
     public abstract byte[] Bytes { get; }
 
     [VisibleInListView(false), VisibleInDetailView(true)]
