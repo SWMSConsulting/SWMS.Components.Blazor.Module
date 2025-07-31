@@ -1,12 +1,10 @@
-﻿using DevExpress.ExpressApp.DC;
-using DevExpress.ExpressApp;
+﻿using DevExpress.ExpressApp;
 using DevExpress.Persistent.Base;
 using DevExpress.Persistent.BaseImpl.EF;
 using DevExpress.Persistent.Validation;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel;
 using SWMS.Components.Blazor.Module.FileViewer.Services;
-using System.IO;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
 
 
 namespace SWMS.Components.Blazor.Module.FileViewer.BusinessObjects;
@@ -18,6 +16,7 @@ public class S3StoredFileData : BaseObject, IFileData, IEmptyCheckable
     public virtual int Size { get; set; }
 
     public virtual string FileName { get; set; }
+
 
     private byte[]? content = null;
 
@@ -36,10 +35,10 @@ public class S3StoredFileData : BaseObject, IFileData, IEmptyCheckable
                 }
                 catch (Exception exc)
                 {
-                    throw new UserFriendlyException($"Error loading file from S3: {exc.Message}", exc);
+                    Console.WriteLine($"Error loading file from S3: {exc.Message}", exc);
                 }
             }
-            return content;
+            return content ?? [];
         }
     }
 
