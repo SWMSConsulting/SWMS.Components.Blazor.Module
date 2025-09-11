@@ -43,14 +43,21 @@ public class S3StoredFileData : BaseObject, IFileData, IEmptyCheckable
     }
 
     private Stream tempSourceStream;
+
+    private bool UseGuidAsFileName => Environment.GetEnvironmentVariable("S3_USE_GUID_AS_FILE_NAME") == "true";
+
     public string RealFileName
     {
         get
         {
-            if (ID != Guid.Empty && !string.IsNullOrEmpty(FileName))
+            if (UseGuidAsFileName && ID != Guid.Empty && !string.IsNullOrEmpty(FileName))
             {
                 var fileExtension = Path.GetExtension(FileName);
                 return $"{ID}{fileExtension}";
+            }
+            else if (!string.IsNullOrEmpty(FileName))
+            {
+                return FileName;
             }
 
             return null;
