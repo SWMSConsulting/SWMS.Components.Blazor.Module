@@ -1,0 +1,11 @@
+﻿<JsonFormsView />
+
+
+@code {
+
+    public static RenderFragment Create(JsonFormsViewModel componentModel) =>
+    @<JsonFormsRenderer ComponentModel=@componentModel />;
+
+    [Parameter]
+    public JsonFormsViewModel ComponentModel { get; set; }
+}

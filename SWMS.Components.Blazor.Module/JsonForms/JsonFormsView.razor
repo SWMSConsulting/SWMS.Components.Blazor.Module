@@ -1,0 +1,335 @@
+﻿@using DevExpress.Blazor
+@using System.Text.Json
+@using System.Text.Json.Nodes
+@using Microsoft.AspNetCore.Components.Rendering
+
+<DxFormLayout style="border: 1px solid #ccc; padding: 10px;">
+    @BuildForm(JsonSchema, UiSchema)
+</DxFormLayout>
+
+@code {
+
+    [Parameter] public string JsonSchema { get; set; } = @"{
+    ""type"": ""object"",
+    ""properties"": {
+        ""firstName"": { ""type"": ""string"" },
+        ""lastName"": { ""type"": ""string"" },
+        ""age"": { ""type"": ""integer"" },
+        ""isEmployed"": { ""type"": ""boolean"" },
+        ""birthDate"": { ""type"": ""string"", ""format"": ""date"" },
+        ""address"": {
+        ""type"": ""object"",
+        ""properties"": {
+            ""street"": { ""type"": ""string"" },
+            ""city"": { ""type"": ""string"" },
+            ""postalCode"": { ""type"": ""string"" }
+        }
+        }
+    }
+}";
+    [Parameter]
+    public string UiSchema { get; set; } = "";
+
+    [Parameter]
+    public JsonObject JsonData { get; set; } = new JsonObject();
+
+    [Parameter]
+    public EventCallback<JsonObject> JsonDataChanged { get; set; }
+
+
+    private RenderFragment BuildForm(string jsonSchemaStr, string uiSchemaStr)
+    {
+        var jsonSchema = JsonNode.Parse(jsonSchemaStr).AsObject();
+
+        JsonObject uiSchema = null;
+        try
+        {
+            uiSchema = JsonNode.Parse(uiSchemaStr).AsObject();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error parsing schemas: {ex.Message}");
+        }
+
+        if (uiSchema == null)
+        {
+            uiSchema = GenerateUiSchema(jsonSchemaStr);
+        }
+
+        return RenderUiSchema(uiSchema, jsonSchema);
+    }
+    public static JsonObject GenerateUiSchema(string jsonSchema)
+    {
+        using var doc = JsonDocument.Parse(jsonSchema);
+        var rootElement = doc.RootElement;
+
+        var uiSchema = new JsonObject
+        {
+            ["type"] = "VerticalLayout",
+            ["elements"] = GenerateElements(rootElement, "#/properties")
+        };
+
+        return uiSchema;
+    }
+
+    private static JsonArray GenerateElements(JsonElement schema, string parentScope)
+    {
+        var elements = new JsonArray();
+
+        if (!schema.TryGetProperty("properties", out var props))
+            return elements;
+
+        var propertyDefs = props.EnumerateObject().ToList();
+
+        JsonObject? currentRow = null;
+
+        foreach (var prop in propertyDefs)
+        {
+            var propName = prop.Name;
+            var propValue = prop.Value;
+            var scope = $"{parentScope}/{propName}";
+
+            // If property is an object => separate group
+            if (propValue.TryGetProperty("type", out var typeProp) && typeProp.GetString() == "object")
+            {
+                // Flush any active row before adding group
+                if (currentRow != null && ((JsonArray)currentRow["elements"]!).Count > 0)
+                {
+                    elements.Add(currentRow);
+                    currentRow = null;
+                }
+
+                // Add the group (nested object)
+                var group = new JsonObject
+                {
+                    ["type"] = "Group",
+                    ["label"] = propName,
+                    ["elements"] = GenerateElements(propValue, $"{scope}/properties")
+                };
+                elements.Add(group);
+            }
+            else
+            {
+                // Start new row if needed
+                if (currentRow == null)
+                {
+                    currentRow = new JsonObject
+                    {
+                        ["type"] = "HorizontalLayout",
+                        ["elements"] = new JsonArray()
+                    };
+                }
+
+                // Add control to current row
+                ((JsonArray)currentRow["elements"]!).Add(new JsonObject
+                {
+                    ["type"] = "Control",
+                    ["scope"] = scope
+                });
+
+                // After 2 controls, close the row
+                if (((JsonArray)currentRow["elements"]!).Count == 2)
+                {
+                    elements.Add(currentRow);
+                    currentRow = null;
+                }
+            }
+        }
+
+        // Flush any remaining open row
+        if (currentRow != null && ((JsonArray)currentRow["elements"]!).Count > 0)
+            elements.Add(currentRow);
+
+        return elements;
+    }
+
+
+    private RenderFragment RenderUiSchema(JsonObject uiNode, JsonObject jsonSchema)
+    {
+        return builder =>
+        {
+            int seq = 0;
+
+            if (!uiNode.ContainsKey("elements")) return;
+
+            foreach (var elementNode in uiNode["elements"].AsArray())
+            {
+                var element = elementNode.AsObject();
+                string type = element["type"].GetValue<string>();
+
+                switch (type)
+                {
+                    case "VerticalLayout":
+                    case "HorizontalLayout":
+                        builder.AddContent(seq++, RenderUiSchema(element, jsonSchema));
+                        break;
+
+                    case "Group":
+                        builder.OpenComponent<DxFormLayoutGroup>(seq++);
+                        builder.AddAttribute(seq++, "Caption", element["label"]?.GetValue<string>() ?? "Group");
+                        builder.AddAttribute(seq++, "ChildContent", RenderUiSchema(element, jsonSchema));
+                        builder.CloseComponent();
+                        break;
+
+                    case "Control":
+                        string scope = element["scope"].GetValue<string>();
+                        var propSchema = GetPropertySchema(jsonSchema, scope);
+                        string propName = scope.Split("/").Last();
+
+                        builder.OpenComponent<DxFormLayoutItem>(seq++);
+                        builder.AddAttribute(seq++, "Caption", propName);
+
+                        builder.AddAttribute(seq++, "Template", (RenderFragment<object>)(context =>
+                            itemBuilder =>
+                            {
+                                AddEditorForSchema(propSchema, scope, itemBuilder);
+                            }));
+
+                        builder.CloseComponent();
+                        break;
+                }
+            }
+        };
+    }
+
+    private JsonObject GetPropertySchema(JsonObject jsonSchema, string scope)
+    {
+        var parts = scope.TrimStart('#').Split("/properties/");
+        JsonObject current = jsonSchema;
+
+        foreach (var part in parts)
+        {
+            if (current["properties"] != null && current["properties"].AsObject().ContainsKey(part))
+            {
+                current = current["properties"][part].AsObject();
+            }
+        }
+        return current;
+    }
+
+    private void AddEditorForSchema(JsonObject propSchema, string scope, RenderTreeBuilder builder)
+    {
+        string type = propSchema["type"]?.GetValue<string>() ?? "string";
+        string propName = scope.Split("/").Last();
+
+        switch (type)
+        {
+            case "string":
+                if (propSchema["format"]?.GetValue<string>() == "date")
+                {
+                    builder.OpenComponent<DxDateEdit<DateTime?>>(0);
+                    builder.AddAttribute(1, "Value", JsonData[propName]?.GetValue<DateTime?>());
+                    builder.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<DateTime?>(this, v =>
+                    {
+                        JsonData[propName] = JsonValue.Create(v);
+                        JsonDataChanged.InvokeAsync(JsonData);
+                    }));
+                    builder.CloseComponent();
+                }
+                else
+                {
+                    builder.OpenComponent<DxTextBox>(0);
+                    builder.AddAttribute(1, "Text", JsonData[propName]?.GetValue<string>() ?? "");
+                    builder.AddAttribute(2, "TextChanged", EventCallback.Factory.Create<string>(this, v =>
+                    {
+                        JsonData[propName] = JsonValue.Create(v);
+                        JsonDataChanged.InvokeAsync(JsonData);
+                    }));
+                    builder.CloseComponent();
+                }
+                break;
+
+            case "integer":
+            case "number":
+                builder.OpenComponent<DxSpinEdit<decimal?>>(0);
+                builder.AddAttribute(1, "Value", JsonData[propName]?.GetValue<decimal?>());
+                builder.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<decimal?>(this, v =>
+                {
+                    JsonData[propName] = JsonValue.Create(v);
+                    JsonDataChanged.InvokeAsync(JsonData);
+                }));
+                builder.CloseComponent();
+                break;
+
+            case "boolean":
+                builder.OpenComponent<DxCheckBox<bool>>(0);
+                builder.AddAttribute(1, "Value", JsonData[propName]?.GetValue<bool>() ?? false);
+                builder.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<bool>(this, v =>
+                {
+                    JsonData[propName] = JsonValue.Create(v);
+                    JsonDataChanged.InvokeAsync(JsonData);
+                }));
+                builder.CloseComponent();
+                break;
+
+            case "object":
+                // Recursively render object properties as nested controls
+                builder.AddContent(0, RenderObjectProperties(propSchema, scope));
+                break;
+        }
+    }
+
+    private RenderFragment RenderObjectProperties(JsonObject propSchema, string parentScope)
+    {
+        var elements = new JsonArray();
+
+        foreach (var kvp in propSchema["properties"].AsObject())
+        {
+            string propName = kvp.Key;
+            var node = kvp.Value.AsObject();
+            string scope = $"{parentScope}/properties/{propName}";
+
+            if (node["type"]?.GetValue<string>() == "object")
+            {
+                elements.Add(new JsonObject
+                {
+                    ["type"] = "Group",
+                    ["label"] = propName,
+                    ["elements"] = RenderObjectPropertiesJson(node, scope)
+                });
+            }
+            else
+            {
+                elements.Add(new JsonObject
+                {
+                    ["type"] = "Control",
+                    ["scope"] = scope
+                });
+            }
+        }
+
+        return RenderUiSchema(new JsonObject { ["elements"] = elements }, propSchema);
+    }
+
+    private JsonArray RenderObjectPropertiesJson(JsonObject propSchema, string parentScope)
+    {
+        var arr = new JsonArray();
+
+        foreach (var kvp in propSchema["properties"].AsObject())
+        {
+            string propName = kvp.Key;
+            var node = kvp.Value.AsObject();
+            string scope = $"{parentScope}/properties/{propName}";
+
+            if (node["type"]?.GetValue<string>() == "object")
+            {
+                arr.Add(new JsonObject
+                {
+                    ["type"] = "Group",
+                    ["label"] = propName,
+                    ["elements"] = RenderObjectPropertiesJson(node, scope)
+                });
+            }
+            else
+            {
+                arr.Add(new JsonObject
+                {
+                    ["type"] = "Control",
+                    ["scope"] = scope
+                });
+            }
+        }
+
+        return arr;
+    }
+}
