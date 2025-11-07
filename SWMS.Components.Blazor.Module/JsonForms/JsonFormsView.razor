@@ -3,7 +3,7 @@
 @using System.Text.Json.Nodes
 @using Microsoft.AspNetCore.Components.Rendering
 
-<DxFormLayout style="border: 1px solid #ccc; padding: 10px;">
+<DxFormLayout style="border: 1px solid #ccc; padding: 10px; margin: 10px">
     @BuildForm(JsonSchema, UiSchema)
 </DxFormLayout>
 
@@ -47,7 +47,15 @@
     #region UI Form Generation
     private RenderFragment BuildForm(string jsonSchemaStr, string uiSchemaStr)
     {
-        var jsonSchema = JsonNode.Parse(jsonSchemaStr)?.AsObject();
+        JsonObject? jsonSchema = null;
+        try 
+        {
+            jsonSchema = JsonNode.Parse(jsonSchemaStr)?.AsObject();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error parsing JSON Schema: {ex.Message}");
+        }
         if (jsonSchema == null)
         {
             return builder =>
