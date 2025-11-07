@@ -39,7 +39,7 @@ internal class JsonFormsAdapter : ComponentAdapterBase
         return ComponentModelObserver.Create(ViewModel, JsonFormsRenderer.Create(ViewModel));
     }
 
-    private void ComponentModel_ValueChanged(object sender, EventArgs e) => RaiseValueChanged();
+    private void ComponentModel_ValueChanged(object? sender, string e) => RaiseValueChanged();
     public override void SetAllowNull(bool allowNull) { /* ...*/ }
     public override void SetDisplayFormat(string displayFormat) { /* ...*/ }
     public override void SetEditMask(string editMask) { /* ...*/ }

@@ -6,7 +6,30 @@ namespace SWMS.Components.Blazor.Module.JsonForms;
 
 public class JsonFormsProperyEditor : BlazorPropertyEditorBase
 {
-    public JsonFormsProperyEditor(Type objectType, IModelMemberViewItem model) : base(objectType, model) { }
+    private JsonFormsViewModel _componentModel;
 
-    protected override IComponentAdapter CreateComponentAdapter() => new JsonFormsAdapter(new JsonFormsViewModel());
+    public JsonFormsProperyEditor(Type objectType, IModelMemberViewItem model) : base(objectType, model) 
+    { 
+        _componentModel = new JsonFormsViewModel();
+        _componentModel.JsonSchema = @"{
+    ""type"": ""object"",
+    ""properties"": {
+        ""firstName"": { ""type"": ""string"" },
+        ""lastName"": { ""type"": ""string"" },
+        ""age"": { ""type"": ""integer"" },
+        ""isEmployed"": { ""type"": ""boolean"" },
+        ""birthDate"": { ""type"": ""string"", ""format"": ""date"" },
+        ""address"": {
+        ""type"": ""object"",
+        ""properties"": {
+            ""street"": { ""type"": ""string"" },
+            ""city"": { ""type"": ""string"" },
+            ""postalCode"": { ""type"": ""string"" }
+        }
+        }
+    }
+}";
+    }
+
+    protected override IComponentAdapter CreateComponentAdapter() => new JsonFormsAdapter(_componentModel);
 }

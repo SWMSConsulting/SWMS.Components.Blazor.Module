@@ -1,4 +1,7 @@
-﻿<JsonFormsView />
+﻿<JsonFormsView JsonSchema="@ComponentModel.JsonSchema"
+               UiSchema="@ComponentModel.UiSchema"
+               JsonData="@ComponentModel.Value"
+               OnJsonDataChanged="@ComponentModel.OnJsonDataChanged" />
 
 
 @code {

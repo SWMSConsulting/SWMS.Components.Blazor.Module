@@ -4,6 +4,14 @@ namespace SWMS.Components.Blazor.Module.JsonForms;
 
 public class JsonFormsViewModel : ComponentModelBase
 {
+    public JsonFormsViewModel(string value = "", string jsonSchema = "", string uiSchema = "", bool readOnly = false)
+    {
+        Value = value;
+        JsonSchema = jsonSchema;
+        UiSchema = uiSchema;
+        ReadOnly = readOnly;
+    }
+
     public string Value
     {
         get => GetPropertyValue<string>();
@@ -16,11 +24,22 @@ public class JsonFormsViewModel : ComponentModelBase
         set => SetPropertyValue(value);
     }
 
-    public void SetValueFromUI(string value)
+    public string JsonSchema
     {
-        SetPropertyValue(value, notify: false, nameof(Value));
-        ValueChanged?.Invoke(this, EventArgs.Empty);
+        get => GetPropertyValue<string>();
+        set => SetPropertyValue(value);
     }
 
-    public event EventHandler ValueChanged;
+    public string UiSchema
+    {
+        get => GetPropertyValue<string>();
+        set => SetPropertyValue(value);
+    }
+
+    public void OnJsonDataChanged(string jsonData)
+    {
+        SetPropertyValue(jsonData, true, nameof(Value));
+        ValueChanged?.Invoke(this, jsonData);
+    }
+    public event EventHandler<string> ValueChanged;
 }
