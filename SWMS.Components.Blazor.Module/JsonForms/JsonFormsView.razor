@@ -7,7 +7,6 @@
     @BuildForm(JsonSchema, UiSchema)
 </DxFormLayout>
 
-
 @code {
 
     [Parameter] 
@@ -141,8 +140,8 @@
                 if (propSchema["format"]?.GetValue<string>() == "date")
                 {
                     builder.OpenComponent<DxDateEdit<DateTime?>>(0);
-                    builder.AddAttribute(1, "Value", JsonDataObject[propName]?.GetValue<DateTime?>());
-                    builder.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<DateTime?>(this, v =>
+                    builder.AddAttribute(1, "Date", JsonDataObject[propName]?.GetValue<DateTime?>());
+                    builder.AddAttribute(2, "DateChanged", EventCallback.Factory.Create<DateTime?>(this, v =>
                     {
                         SetJsonDataValue(propName, JsonValue.Create(v));
                     }));
@@ -173,8 +172,8 @@
 
             case "boolean":
                 builder.OpenComponent<DxCheckBox<bool>>(0);
-                builder.AddAttribute(1, "Value", JsonDataObject[propName]?.GetValue<bool>() ?? false);
-                builder.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<bool>(this, v =>
+                builder.AddAttribute(1, "Checked", JsonDataObject[propName]?.GetValue<bool>() ?? false);
+                builder.AddAttribute(2, "CheckedChanged", EventCallback.Factory.Create<bool>(this, v =>
                 {
                     SetJsonDataValue(propName, JsonValue.Create(v));
                 }));
