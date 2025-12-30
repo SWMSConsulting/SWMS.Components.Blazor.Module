@@ -1,0 +1,33 @@
+﻿@using SWMS.Components.Blazor.Module.KanbanView.Models
+
+@if (Data is not null)
+{
+    <div class="kanban-board d-flex">
+        @foreach (var column in Columns)
+        {
+            <div class="kanban-column p-2">
+                <h5>@column.KanbanColumnName</h5>
+                @foreach (var item in GetItemsForColumn(column))
+                {
+                    <div class="kanban-card border p-1 mb-1">
+                        <strong>@item.KanbanTitle</strong>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter]
+    public IEnumerable<IKanbanItem> Data { get; set; }
+
+    private IEnumerable<IKanbanColumn> Columns =>
+        Data?.Select(i => i.KanbanColumn)
+            .Where(c => c != null)
+            .OrderBy(c => c.KanbanColumnIndex)
+            .Distinct() ?? Enumerable.Empty<IKanbanColumn>();
+
+    private IEnumerable<IKanbanItem> GetItemsForColumn(IKanbanColumn column) =>
+        Data?.Where(i => i.KanbanColumn == column) ?? Enumerable.Empty<IKanbanItem>();
+}
