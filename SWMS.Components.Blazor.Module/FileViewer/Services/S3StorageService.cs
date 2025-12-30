@@ -15,10 +15,6 @@ public class S3StorageService
         var awsAccessKey = Environment.GetEnvironmentVariable("S3_ACCESS_KEY");
         var awsSecretKey = Environment.GetEnvironmentVariable("S3_SECRET_KEY");
         var serviceUrl = Environment.GetEnvironmentVariable("S3_SERVICE_URL");
-        Console.WriteLine($"Access Key: {awsAccessKey}");
-        Console.WriteLine($"Secret Key: {awsSecretKey}");
-        Console.WriteLine($"Service URL: {serviceUrl}");
-        Console.WriteLine($"Bucket Name: {BucketName}");
 
         if (string.IsNullOrEmpty(awsAccessKey) || string.IsNullOrEmpty(awsSecretKey) || string.IsNullOrEmpty(serviceUrl) || string.IsNullOrEmpty(BucketName))
         {
@@ -59,8 +55,6 @@ public class S3StorageService
             {
                 throw new Exception($"Error uploading file to S3: {response.HttpStatusCode}");
             }
-
-            Console.WriteLine($"File '{fileName}' uploaded successfully to bucket '{BucketName}'.");
         }
         catch (AmazonS3Exception ex)
         {
@@ -73,7 +67,7 @@ public class S3StorageService
             throw;
         }
     }
-    
+
     public static void DeleteFileFromS3(string fileName)
     {
         if (string.IsNullOrEmpty(fileName))
@@ -90,7 +84,6 @@ public class S3StorageService
                 Key = fileName
             };
             var response = s3Client.DeleteObjectAsync(deleteRequest).Result;
-            Console.WriteLine($"File '{fileName}' deleted successfully from bucket '{BucketName}'.");
         }
         catch (AmazonS3Exception ex)
         {
@@ -102,5 +95,157 @@ public class S3StorageService
             Console.WriteLine($"General error: {ex.Message}");
             throw;
         }
+    }
+
+    public static MemoryStream LoadFileFromS3(string filename)
+    {
+        if (string.IsNullOrEmpty(filename))
+        {
+            throw new ArgumentException("File name cannot be null or empty.");
+        }
+        try
+        {
+            using var s3Client = GetClient();
+            var getRequest = new GetObjectRequest
+            {
+                BucketName = BucketName,
+                Key = filename
+            };
+            using var response = s3Client.GetObjectAsync(getRequest).Result;
+            using var responseStream = response.ResponseStream;
+            var memoryStream = new MemoryStream();
+            responseStream.CopyTo(memoryStream);
+            memoryStream.Position = 0; // Reset the position of the stream
+            return memoryStream;
+        }
+        catch (AmazonS3Exception ex)
+        {
+            Console.WriteLine($"AWS S3 error: {ex.Message}");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"General error: {ex.Message}");
+            throw;
+        }
+    }
+
+    public static bool FileExists(string fileName)
+    {
+        if (string.IsNullOrEmpty(fileName))
+        {
+            return false;
+        }
+        try
+        {
+            using var s3Client = GetClient();
+            var request = new GetObjectMetadataRequest
+            {
+                BucketName = BucketName,
+                Key = fileName
+            };
+            s3Client.GetObjectMetadataAsync(request).Wait();
+            return true;
+        }
+        catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"General error: {ex.Message}");
+            throw;
+        }
+
+    }
+
+    public static int GetFilesCount(string prefix = "")
+    {
+        string? continuationToken = null;
+        int count = 0;
+        bool isTruncated = true;
+        try
+        {
+            using var s3Client = GetClient();
+            while (isTruncated)
+            {
+                var listRequest = new ListObjectsV2Request
+                {
+                    BucketName = BucketName,
+                    ContinuationToken = continuationToken,
+                    Prefix = prefix,
+                };
+
+                var response = s3Client.ListObjectsV2Async(listRequest).Result;
+                count += response.S3Objects.Count;
+
+                continuationToken = response.NextContinuationToken;
+                isTruncated = response.IsTruncated;
+            }
+        }
+        catch (AmazonS3Exception ex)
+        {
+            Console.WriteLine($"AWS S3 error: {ex.Message}");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"General error: {ex.Message}");
+            throw;
+        }
+
+        return count;
+    }
+
+    public static async Task<bool> CleanupFiles(string prefix, List<string> existingFiles)
+    {
+        string? continuationToken = null;
+        bool isTruncated = true;
+        var filesToDelete = new List<string>();
+
+        try
+        {
+            using var s3Client = GetClient();
+            while (isTruncated)
+            {
+                var listRequest = new ListObjectsV2Request
+                {
+                    BucketName = BucketName,
+                    ContinuationToken = continuationToken,
+                    Prefix = prefix,
+                };
+
+                var response = s3Client.ListObjectsV2Async(listRequest).Result;
+                foreach (var s3Object in response.S3Objects)
+                {
+                    if (!existingFiles.Contains(s3Object.Key))
+                    {
+                        filesToDelete.Add(s3Object.Key);
+                        Console.WriteLine($"File to delete: {s3Object.Key}"); // Debugging output
+                    }
+                }
+                continuationToken = response.NextContinuationToken;
+                isTruncated = response.IsTruncated;
+            }
+
+            foreach (var file in filesToDelete)
+            {
+                var deleteRequest = new DeleteObjectRequest
+                {
+                    BucketName = BucketName,
+                    Key = file
+                };
+                //s3Client.DeleteObjectAsync(deleteRequest).Wait();
+            }
+            Console.WriteLine($"Deleted {filesToDelete.Count} files from S3 with prefix '{prefix}' that were not in the existing files list.");
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"General error: {ex.Message}");
+            return false;
+        }
+
+        return true;
     }
 }
