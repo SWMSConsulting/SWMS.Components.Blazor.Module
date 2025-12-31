@@ -5,9 +5,15 @@ namespace SWMS.Components.Blazor.Module.KanbanView;
 
 public class KanbanBoardModel : ComponentModelBase
 {
-    public IEnumerable<IKanbanItem> Data
+    public IEnumerable<IKanbanItem> Items
     {
         get => GetPropertyValue<IEnumerable<IKanbanItem>>();
+        set => SetPropertyValue(value);
+    }
+
+    public IEnumerable<IKanbanColumn> Columns
+    {
+        get => GetPropertyValue<IEnumerable<IKanbanColumn>>();
         set => SetPropertyValue(value);
     }
 

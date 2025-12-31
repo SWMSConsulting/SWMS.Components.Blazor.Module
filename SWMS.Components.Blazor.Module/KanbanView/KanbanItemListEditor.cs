@@ -8,11 +8,12 @@ using Microsoft.AspNetCore.Components;
 using SWMS.Components.Blazor.Module.KanbanView.Models;
 using System.Collections;
 using System.ComponentModel;
+using System.Security.AccessControl;
 
 namespace SWMS.Components.Blazor.Module.KanbanView;
 
 [ListEditor(typeof(IKanbanItem))]
-public class KanbanItemListEditor : ListEditor, IComponentContentHolder
+public class KanbanItemListEditor : ListEditor, IComplexListEditor, IComponentContentHolder
 {
     private RenderFragment _componentContent;
 
@@ -31,6 +32,22 @@ public class KanbanItemListEditor : ListEditor, IComponentContentHolder
     }
 
     public KanbanItemListEditor(IModelListView model) : base(model) { }
+
+    public IObjectSpace ObjectSpace { get; set; }
+    public XafApplication Application { get; set; }
+    public Type? ColumnType { get; private set; }
+    public void Setup(CollectionSourceBase collectionSource, XafApplication application)
+    {
+        ObjectSpace = collectionSource.ObjectSpace;
+        Application = application;
+
+        var typeInfo = collectionSource.ObjectTypeInfo;
+        var columnMember = typeInfo.Members
+            .FirstOrDefault(m =>
+                typeof(IKanbanColumn).IsAssignableFrom(m.MemberType));
+
+        ColumnType = columnMember?.MemberType;
+    }
 
     protected override object CreateControlsCore()
     {
@@ -60,7 +77,19 @@ public class KanbanItemListEditor : ListEditor, IComponentContentHolder
     {
         if (ComponentModel is not null)
         {
-            ComponentModel.Data = (dataSource as IEnumerable)?.OfType<IKanbanItem>().ToList() ?? [];
+            var enumerable = dataSource as IEnumerable;
+            ComponentModel.Items = enumerable?.OfType<IKanbanItem>().ToList() ?? [];
+
+            if (ColumnType != null)
+            {
+                var columns = ObjectSpace
+                    .GetObjects(ColumnType)
+                    .OfType<IKanbanColumn>()
+                    .OrderBy(c => c.KanbanColumnIndex)
+                    .ToList();
+
+                ComponentModel.Columns = columns;
+            }
         }
     }
 

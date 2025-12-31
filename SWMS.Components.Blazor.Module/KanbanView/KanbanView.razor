@@ -1,33 +1,27 @@
-﻿@using SWMS.Components.Blazor.Module.KanbanView.Models
-
-@if (Data is not null)
+﻿@using DevExpress.Blazor
+@using SWMS.Components.Blazor.Module.KanbanView.Models
+@if (Items != null && Columns != null)
 {
-    <div class="kanban-board d-flex">
-        @foreach (var column in Columns)
+    @code {
+        int ColumnSpan => Columns.Count() == 0 ? 12 : Math.Max(1, 12 / Columns.Count());
+    }
+    <DxFormLayout>
+        @foreach (var column in Columns.OrderBy(c => c.KanbanColumnIndex))
         {
-            <div class="kanban-column p-2">
-                <h5>@column.KanbanColumnName</h5>
-                @foreach (var item in GetItemsForColumn(column))
+            <DxFormLayoutGroup Caption=@column.KanbanColumnName ColSpanMd=@ColumnSpan>
+
+                @foreach (var item in Items.Where(i => i.KanbanColumn == column))
                 {
-                    <div class="kanban-card border p-1 mb-1">
-                        <strong>@item.KanbanTitle</strong>
-                    </div>
+                    <DxFormLayoutGroup Caption=@item.KanbanTitle draggable="true">
+                        
+                    </DxFormLayoutGroup>
                 }
-            </div>
+            </DxFormLayoutGroup>
         }
-    </div>
+    </DxFormLayout>
 }
 
 @code {
-    [Parameter]
-    public IEnumerable<IKanbanItem> Data { get; set; }
-
-    private IEnumerable<IKanbanColumn> Columns =>
-        Data?.Select(i => i.KanbanColumn)
-            .Where(c => c != null)
-            .OrderBy(c => c.KanbanColumnIndex)
-            .Distinct() ?? Enumerable.Empty<IKanbanColumn>();
-
-    private IEnumerable<IKanbanItem> GetItemsForColumn(IKanbanColumn column) =>
-        Data?.Where(i => i.KanbanColumn == column) ?? Enumerable.Empty<IKanbanItem>();
+    [Parameter] public IEnumerable<IKanbanItem> Items { get; set; }
+    [Parameter] public IEnumerable<IKanbanColumn> Columns { get; set; }
 }
