@@ -23,25 +23,6 @@
             OnItemDropped="OnItemDropped" />
         }
     </div>
-
-@code {
-    int ColumnSpan => Columns.Count() == 0 ? 12 : Math.Max(1, 12 / Columns.Count());
-}
-<DxFormLayout>
-    @foreach (var column in Columns.OrderBy(c => c.KanbanColumnIndex))
-    {
-        <DxFormLayoutGroup Caption=@column.KanbanColumnName ColSpanMd=@ColumnSpan>
-
-            @foreach (var item in Items.Where(i => i.KanbanColumn == column))
-            {
-                <DxFormLayoutGroup Caption=@item.KanbanTitle draggable="true">
-
-                </DxFormLayoutGroup>
-            }
-        </DxFormLayoutGroup>
-    }
-</DxFormLayout>
-
 }
 @code {
     [Parameter] public IEnumerable<IKanbanItem> Items { get; set; }
