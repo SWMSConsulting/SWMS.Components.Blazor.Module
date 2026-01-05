@@ -1,6 +1,8 @@
 ﻿@using Microsoft.AspNetCore.Components.Web
 @using SWMS.Components.Blazor.Module.KanbanView.Models
 
+@inject DevExpress.ExpressApp.Blazor.Services.IXafApplicationProvider XafApplicationProvider
+
 <style>
     .kanban-card {
         background-color: white;
@@ -38,7 +40,8 @@
 <div class="kanban-card @(Item.IsDragEnabled ? "" : "disabled")"
      draggable="@(Item.IsDragEnabled ? "true" : "false")"
      @ondragstart="OnDragStart"
-     @ondragend="OnDragEnd">
+     @ondragend="OnDragEnd"
+     @ondblclick="() => OpenDetailView(Item)">
 
     <div class="kanban-card-title">
         @Item.KanbanTitle
@@ -72,5 +75,23 @@
     private void OnDragEnd(DragEventArgs e)
     {
         KanbanDragContext.CurrentItem = null;
+    }
+
+    private void OpenDetailView(IKanbanItem item)
+    {
+        if (item is not DevExpress.Persistent.BaseImpl.EF.BaseObject bo)
+            return;
+
+        var app = XafApplicationProvider.GetApplication();
+        var objectSpace = app.CreateObjectSpace(bo.GetType());
+        var selectedObject = objectSpace.GetObject(bo);
+
+        var detailView = app.CreateDetailView(
+            objectSpace: objectSpace,
+            obj: selectedObject,
+            isRoot: true
+        );
+
+        app.ShowViewStrategy.ShowViewFromCommonView(detailView);
     }
 }
