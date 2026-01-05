@@ -16,17 +16,25 @@
 
     .kanban-card:active {
         cursor: grabbing;
+        opacity: 0.6;
     }
     
     .kanban-card-title {
         font-weight: bold;
     }
     
+    .kanban-drop-target {
+        outline: 2px dashed #3b82f6;
+        outline-offset: -4px;
+        background-color: rgba(59,130,246,0.05);
+    }
+    
 </style>
 
 <div class="kanban-card"
      draggable="true"
-     @ondragstart="OnDragStart">
+     @ondragstart="OnDragStart"
+     @ondragend="OnDragEnd">
 
     <div class="kanban-card-title">
         @Item.KanbanTitle
@@ -45,6 +53,20 @@
 
     private void OnDragStart(DragEventArgs e)
     {
+        if (!Item.IsDragEnabled)
+        {
+            return;
+        }
+
         KanbanDragContext.CurrentItem = Item;
+
+        // REQUIRED for Firefox & consistency
+        e.DataTransfer.DropEffect = "move";
+        e.DataTransfer.EffectAllowed = "move";
+    }
+    
+    private void OnDragEnd(DragEventArgs e)
+    {
+        KanbanDragContext.CurrentItem = null;
     }
 }

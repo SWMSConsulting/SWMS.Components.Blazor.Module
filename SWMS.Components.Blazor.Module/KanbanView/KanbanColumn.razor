@@ -1,13 +1,16 @@
-﻿@using Microsoft.AspNetCore.Components.Web
+﻿@using DevExpress.ExpressApp
+@using Microsoft.AspNetCore.Components.Web
 @using SWMS.Components.Blazor.Module.KanbanView.Models
 
+@inject DevExpress.ExpressApp.Blazor.Services.IXafApplicationProvider XafApplicationProvider
+
 <style>
-    /* Column uses vertical flex layout */
     .kanban-column {
+        flex: 0 0 auto; 
+        min-width: 280px;
+        max-width: 360px;
         display: flex;
         flex-direction: column;
-        min-width: 280px;
-        max-width: 280px;
         height: 100%;
     }
 
@@ -28,8 +31,10 @@
     }
 </style>
 
-<div class="kanban-column"
-     @ondragover="AllowDrop"
+<div class="kanban-column @DropCss"
+     @ondragover="OnDragOver"
+     @ondragover:preventDefault
+     @ondragleave="OnDragLeave"
      @ondrop="OnDrop">
 
     <div class="kanban-column-header">
@@ -50,15 +55,40 @@
 
     [Parameter] public EventCallback<(IKanbanItem, IKanbanColumn)> OnItemDropped { get; set; }
 
-    private void AllowDrop(DragEventArgs e)
+    private bool isDragOver;
+
+    private void OnDragOver(DragEventArgs e)
     {
-        //e.PreventDefault();
+        isDragOver = true;
+    }
+
+    private void OnDragLeave(DragEventArgs e)
+    {
+        isDragOver = false;
     }
 
     private async Task OnDrop(DragEventArgs e)
     {
+        isDragOver = false;
         var item = KanbanDragContext.CurrentItem;
         if (item != null)
-            await OnItemDropped.InvokeAsync((item, Column));
+        {
+            if (item.CanDropTo(Column))
+            {
+                await OnItemDropped.InvokeAsync((item, Column));
+            }
+            else 
+            {
+                var app = XafApplicationProvider.GetApplication();
+
+                app?.ShowViewStrategy.ShowMessage(
+                    $"Cannot move item '{item.KanbanTitle}' to '{Column.KanbanColumnName}'.",
+                    InformationType.Warning,
+                    3000
+                );
+            }
+        }
     }
+
+    private string DropCss => isDragOver ? "kanban-drop-target" : "";
 }
