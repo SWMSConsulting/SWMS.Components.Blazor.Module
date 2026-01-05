@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Components;
 using SWMS.Components.Blazor.Module.KanbanView.Models;
 using System.Collections;
 using System.ComponentModel;
-using System.Security.AccessControl;
 
 namespace SWMS.Components.Blazor.Module.KanbanView;
 

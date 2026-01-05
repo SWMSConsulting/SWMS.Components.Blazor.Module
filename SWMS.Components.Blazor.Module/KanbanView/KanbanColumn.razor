@@ -1,0 +1,64 @@
+﻿@using Microsoft.AspNetCore.Components.Web
+@using SWMS.Components.Blazor.Module.KanbanView.Models
+
+<style>
+    /* Column uses vertical flex layout */
+    .kanban-column {
+        display: flex;
+        flex-direction: column;
+        min-width: 280px;
+        max-width: 280px;
+        height: 100%;
+    }
+
+    /* Fixed header */
+    .kanban-column-header {
+        flex: 0 0 auto;
+        padding: 8px;
+        font-size: medium;
+    }
+
+    /* Scrollable area */
+    .kanban-column-body {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding: 8px;
+        background: var(--bs-gray-200);
+        border-radius: 6px;
+    }
+</style>
+
+<div class="kanban-column"
+     @ondragover="AllowDrop"
+     @ondrop="OnDrop">
+
+    <div class="kanban-column-header">
+        @Column.KanbanColumnName
+    </div>
+
+    <div class="kanban-column-body">
+        @foreach (var item in Items)
+        {
+            <KanbanCard Item="item" />
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public IKanbanColumn Column { get; set; }
+    [Parameter] public List<IKanbanItem> Items { get; set; }
+
+    [Parameter] public EventCallback<(IKanbanItem, IKanbanColumn)> OnItemDropped { get; set; }
+
+    private void AllowDrop(DragEventArgs e)
+    {
+        //e.PreventDefault();
+    }
+
+    private async Task OnDrop(DragEventArgs e)
+    {
+        var item = KanbanDragContext.CurrentItem;
+        if (item != null)
+            await OnItemDropped.InvokeAsync((item, Column));
+    }
+}

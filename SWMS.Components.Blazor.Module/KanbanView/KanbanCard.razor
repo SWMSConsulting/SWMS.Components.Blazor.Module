@@ -1,0 +1,50 @@
+﻿@using Microsoft.AspNetCore.Components.Web
+@using SWMS.Components.Blazor.Module.KanbanView.Models
+
+<style>
+    .kanban-card {
+        background-color: white;
+        border: 1px solid lightgray;
+        border-radius: 6px;
+        padding: 8px;
+        margin-bottom: 8px;
+        cursor: grab;
+    }
+    .kanban-card:hover {
+      box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+    }
+
+    .kanban-card:active {
+        cursor: grabbing;
+    }
+    
+    .kanban-card-title {
+        font-weight: bold;
+    }
+    
+</style>
+
+<div class="kanban-card"
+     draggable="true"
+     @ondragstart="OnDragStart">
+
+    <div class="kanban-card-title">
+        @Item.KanbanTitle
+    </div>
+
+    @if (!string.IsNullOrEmpty(Item.KanbanDescription))
+    {
+        <div class="kanban-card-description">
+            @Item.KanbanDescription
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public IKanbanItem Item { get; set; }
+
+    private void OnDragStart(DragEventArgs e)
+    {
+        KanbanDragContext.CurrentItem = Item;
+    }
+}
