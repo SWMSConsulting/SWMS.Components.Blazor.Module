@@ -17,5 +17,5 @@ public class KanbanBoardModel : ComponentModelBase
         set => SetPropertyValue(value);
     }
 
-    public override Type ComponentType => typeof(KanbanView);
+    public override Type ComponentType => typeof(KanbanBoard);
 }
