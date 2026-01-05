@@ -28,11 +28,15 @@
         outline-offset: -4px;
         background-color: rgba(59,130,246,0.05);
     }
+
+    .kanban-card.disabled {
+        cursor: default;
+    }
     
 </style>
 
-<div class="kanban-card"
-     draggable="true"
+<div class="kanban-card @(Item.IsDragEnabled ? "" : "disabled")"
+     draggable="@(Item.IsDragEnabled ? "true" : "false")"
      @ondragstart="OnDragStart"
      @ondragend="OnDragEnd">
 
