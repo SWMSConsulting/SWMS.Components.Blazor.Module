@@ -57,9 +57,7 @@ public abstract class ViewableFileAttachment : BaseObject
             if (string.IsNullOrEmpty(filename) == false)
             {
                 // if it is a docx et al need to convert it to a pdf before rendering it
-                if (filename.Contains(".doc") || filename.Contains(".docx")
-                    || filename.Contains(".rtf") || filename.Contains(".xml")
-                    || filename.Contains(".txt"))
+                if (filename.Contains(".doc") || filename.Contains(".docx") || filename.Contains(".rtf"))
                 {
                     using (RichEditDocumentServer reds = new RichEditDocumentServer())
                     {
@@ -87,9 +85,7 @@ public abstract class ViewableFileAttachment : BaseObject
 
     public static string GetMimeType(string fileName)
     {
-        if (fileName.Contains(".doc") || fileName.Contains(".docx")
-            || fileName.Contains(".rtf") || fileName.Contains(".xml")
-            || fileName.Contains(".txt"))
+        if (fileName.Contains(".doc") || fileName.Contains(".docx") || fileName.Contains(".rtf"))
         {
             return "application/pdf";
         }
