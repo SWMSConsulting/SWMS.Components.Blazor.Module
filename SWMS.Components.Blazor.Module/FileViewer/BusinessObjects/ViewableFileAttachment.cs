@@ -16,6 +16,10 @@ public abstract class ViewableFileAttachment : BaseObject
     [RuleRequiredField]
     public virtual FileAttachmentType FileAttachmentType { get; set; }
 
+    [ModelDefault("EditMask", "dd.MM.yyyy HH:mm:ss")]
+    [ModelDefault("DisplayFormat", "{0:dd.MM.yyyy HH:mm:ss}")]
+    public virtual DateTime ModifiedOn { get; set; }
+
     [VisibleInDetailView(false), VisibleInListView(true)]
     public abstract string FileName { get; }
 
@@ -95,5 +99,11 @@ public abstract class ViewableFileAttachment : BaseObject
         if (!provider.TryGetContentType(fileName, out contentType))
             contentType = "application/octet-stream";
         return contentType;
+    }
+
+    public override void OnSaving()
+    {
+        base.OnSaving();
+        ModifiedOn = DateTime.Now;
     }
 }
