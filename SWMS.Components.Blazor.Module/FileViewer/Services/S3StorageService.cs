@@ -1,4 +1,4 @@
-﻿using Amazon.Runtime;
+using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
 
@@ -161,7 +161,7 @@ public class S3StorageService
 
     public static int GetFilesCount(string prefix = "")
     {
-        string? continuationToken = null;
+        string continuationToken = null;
         int count = 0;
         bool isTruncated = true;
         try
@@ -199,7 +199,7 @@ public class S3StorageService
 
     public static async Task<bool> CleanupFiles(string prefix, List<string> existingFiles)
     {
-        string? continuationToken = null;
+        string continuationToken = null;
         bool isTruncated = true;
         var filesToDelete = new List<string>();
 

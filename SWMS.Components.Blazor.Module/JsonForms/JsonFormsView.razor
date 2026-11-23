@@ -35,7 +35,7 @@
         }
     }
 
-    private void SetJsonDataValue(string propName, JsonValue? value)
+    private void SetJsonDataValue(string propName, JsonValue value)
     {
         var tempData = JsonDataObject;
         tempData[propName] = value;
@@ -46,7 +46,7 @@
     #region UI Form Generation
     private RenderFragment BuildForm(string jsonSchemaStr, string uiSchemaStr)
     {
-        JsonObject? jsonSchema = null;
+        JsonObject jsonSchema = null;
         try 
         {
             jsonSchema = JsonNode.Parse(jsonSchemaStr)?.AsObject();
@@ -63,7 +63,7 @@
             };
         }
 
-        JsonObject? uiSchema = null;
+        JsonObject uiSchema = null;
         try
         {
             uiSchema = JsonNode.Parse(uiSchemaStr)?.AsObject();

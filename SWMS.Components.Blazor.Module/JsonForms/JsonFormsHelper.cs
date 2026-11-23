@@ -31,7 +31,7 @@ public static class JsonFormsHelper
 
         var propertyDefs = props.EnumerateObject().ToList();
 
-        JsonObject? currentRow = null;
+        JsonObject currentRow = null;
 
         foreach (var prop in propertyDefs)
         {

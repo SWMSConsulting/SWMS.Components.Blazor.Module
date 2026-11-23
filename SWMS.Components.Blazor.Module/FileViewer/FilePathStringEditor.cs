@@ -20,7 +20,6 @@ public class FilePathStringEditor : BlazorPropertyEditorBase
 
         componentModel.Data = files;
         componentModel.AllowUserInput = true;
-        componentModel.FilteringMode = DataGridFilteringMode.Contains;
         componentModel.ClearButtonDisplayMode = AllowNull ? DataEditorClearButtonDisplayMode.Auto : DataEditorClearButtonDisplayMode.Never;
         componentModel.NullText = NullText;
         return componentModel;

@@ -27,7 +27,7 @@
     public IObjectSpace ObjectSpace { get; set; }
 
     [Parameter]
-    public IIndexedItem? Item { get; set; }
+    public IIndexedItem Item { get; set; }
 
     public static RenderFragment<GridDataColumnCellDisplayTemplateContext> Create(IObjectSpace objectSpace) => (item) =>
     {

@@ -18,7 +18,7 @@ public class S3StoredFileData : BaseObject, IFileData, IEmptyCheckable
     public virtual string FileName { get; set; }
 
 
-    private byte[]? content = null;
+    private byte[] content = null;
 
     public byte[] Content
     {
